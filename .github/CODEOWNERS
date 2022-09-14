@@ -8,19 +8,24 @@
 #####       Krzysztof Cwalina           @KrzysztofCwalina   .NET
 #####       Johan Stenberg              @johanste           Python
 #####       Gor Nishanov                @gornishanov        C / C++
-#####       Adrian Hall                 @adrianhall         Program Management
+#####       Kyle Patterson              @kyle-patterson     Program Management
 #####
 #####   Engineering Systems:
-#####       Maggie Pint                 @maggiepint         Program Management
 #####       Mike Harder                 @mikeharder         Eng. Sys. Engineer
 #####       Wes Haggard                 @weshaggard         Eng. Sys. Engineer
 #####
 #####   Team Management:
 #####       Peter Marcu                 @petermarcu         Dev Management
-#####       Larry Olson                 @loarabia           PM Management
+#####       Mayuri Diwan                @mayurid            Dev Management
+#####       Samer Alameer               @salameer           Dev Management
+#####       Lori Fraleigh               @lorifraleigh       PM Management
 #####       Scott Kurtzeborn            @Kurtzeborn         Eng. Sys. Dev Lead
-#####       Alex Ghiondea               @AlexGhiondea       Dev Lead - TS and .NET
-#####       Mayuri Diwan                @mayurid            Dev Lead - Python and Java
+#####       Rick Winter                 @RickWinter         Dev Lead - Go and C++
+#####       Josh Free                   @joshfree           Dev Lead - Java
+#####       Jeff Fisher                 @xirzec             Dev Lead - JavaScript
+#####       Jesse Squire                @jsquire            Dev Lead - .NET
+#####       Pallavi Taneja              @pallavit           Dev Lead - .NET
+#####       Laurent Mazuel              @lmazuel            Dev Lead - Python
 #####
 #####   External language experts:
 #####       Anna Tisch                  @annatisch          Python
@@ -44,18 +49,50 @@
 ##### * Engineering Systems PRs must be approved by two engineering systems team members.
 #####
 
+# Git Hub bot rules
+/.github/fabricbot.json  @jsquire @ronniegeraghty
+
 # Engineering systems documents
-docs/android/                @adrianhall,@JonathanGiles
-docs/clang/                  @adrianhall,@JeffreyRichter
-docs/dotnet/                 @KrzysztofCwalina
-docs/general/                @adrianhall
-docs/golang/                 @JeffreyRichter
-docs/java/                   @JonathanGiles
-docs/policies/               @maggiepint,@Kurtzeborn,@weshaggard,@mikeharder
-docs/python/                 @johanste
-docs/redirects/              @adrianhall
-docs/tables/                 @adrianhall
-docs/typescript/             @bterlson
+docs/android/                @JonathanGiles @salameer
+docs/clang/                  @JeffreyRichter @LarryOsterman @RickWinter
+docs/cpp/                    @JeffreyRichter @LarryOsterman @RickWinter
+docs/dotnet/                 @KrzysztofCwalina @annelo-msft @salameer @tg-msft
+docs/general/                @salameer
+docs/golang/                 @JeffreyRichter @jhendrixMSFT @RickWinter
+docs/ios/                    @salameer
+docs/java/                   @JonathanGiles @salameer @srnagar
+docs/policies/               @Kurtzeborn @weshaggard @salameer
+docs/python/                 @johanste @salameer @annatisch
+docs/redirects/              @kyle-patterson
+docs/tables/                 @kyle-patterson
+docs/typescript/             @bterlson @salameer @xirzec
 eng/                         @weshaggard
-releases/                    @adrianhall,@loarabia
-_posts/                      @adrianhall,@loarabia
+_posts/                      @kyle-patterson
+_data/                       @czubair @weshaggard
+android.md                   @czubair @vcolin7 @anuchandy
+android.yml                  @czubair @vcolin7 @anuchandy
+android-packages.csv         @czubair @vcolin7 @anuchandy
+c.md                         @czubair @ahsonkhan 
+c.yml                        @czubair @ahsonkhan 
+c-packages.csv               @czubair @ahsonkhan 
+cpp.md                       @czubair @antkmsft 
+cpp.yml                      @czubair @antkmsft
+cpp-packages.csv             @czubair @antkmsft
+dotnet.md                    @czubair @m-redding
+dotnet.yml                   @czubair @m-redding
+dotnet-packages.csv          @czubair @m-redding
+ios.md                       @czubair @vcolin7 @tjprescott 
+ios.yml                      @czubair @vcolin7 @tjprescott
+ios-packages.csv             @czubair @vcolin7 @tjprescott
+java.md                      @czubair @vcolin7
+java.yml                     @czubair @vcolin7
+java-packages.csv            @czubair @vcolin7
+js.md                        @czubair @timovv
+js.yml                       @czubair @timovv
+js-packages.csv              @czubair @timovv
+python.md                    @czubair @xiangyan99
+python.yml                   @czubair @xiangyan99
+python-packages.csv          @czubair @xiangyan99
+go.md                        @czubair @chlowell
+go.yml                       @czubair @chlowell
+go-packages.csv              @czubair @chlowell

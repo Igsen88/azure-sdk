@@ -1,7 +1,7 @@
 ---
 title: Azure SDK December 2019
 layout: post
-date: Dec 2019
+date: 2019-12-13
 tags: release
 sidebar: releases_sidebar
 permalink: /releases/2019-12/index.html
@@ -10,5 +10,5 @@ permalink: /releases/2019-12/index.html
 
 * [.NET]({{ site.baseurl }}{% link releases/2019-12/2019-12-dotnet.md %})
 * [Java]({{ site.baseurl }}{% link releases/2019-12/2019-12-java.md %})
+* [JavaScript]({{ site.baseurl }}{% link releases/2019-12/2019-12-js.md %})
 * [Python]({{ site.baseurl }}{% link releases/2019-12/2019-12-python.md %})
-* [TypeScript]({{ site.baseurl }}{% link releases/2019-12/2019-12-js.md %})

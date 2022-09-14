@@ -57,9 +57,9 @@ where _ServiceName_ is the canonical shortname without spaces, and _Configuratio
 
 ## Parameter validation
 
-The service client will have several methods that perform requests on the service.  _Service parameters_ are directly passed across the wire to an Azure service.  _Client parameters_ are not passed directly to the service, but used within the client library to fulfill the request.  Examples of client parameters include values that are used to construct a URI, or a file that needs to be uploaded to storage.
+The service client will have methods that send requests to the service. These methods take two kinds of parameters: _service parameters_ and _client parameters_. _Service parameters_ are sent across the wire to the service as URL segments, query parameters, request header values, and request bodies (typically JSON or XML).  _Client parameters_ are used solely within the client library and are not sent to the service; examples are path parameters, CancellationTokens or file paths.  If, for example, a path parameter is not validated, it could result in sending a request to a malformed URI, which could prevent the service from having the opportunity to do validation on it.
 
-{% include requirement/MUST id="general-params-client-validation" %} validate client parameters.
+{% include requirement/MUST id="general-params-client-validation" %} validate client parameters.  This includes checks for null values for required path parameters, and checks for empty string values if a required path parameter declares a `minLength` greater than zero.
 
 {% include requirement/MUSTNOT id="general-params-server-validation" %} validate service parameters.  This includes null checks, empty strings, and other common validating conditions. Let the service validate any request parameters.
 
@@ -177,9 +177,19 @@ Distributed tracing mechanisms allow the consumer to trace their code from front
 
 {% include requirement/MUST id="general-tracing-accept-context" %} accept a context from calling code to establish a parent span.
 
-{% include requirement/MUST id="general-tracing-pass-context" %} pass the context to the backend service through the appropriate headers (`traceparent`, `tracestate`, etc.) to support [Azure Monitor].  This is generally done with the HTTP pipeline.
+{% include requirement/MUST id="general-tracing-pass-context" %} pass the context to the backend service through the appropriate headers (`traceparent` and `tracestate` per [W3C Trace-Context](https://www.w3.org/TR/trace-context/) standard)) to support [Azure Monitor].  This is generally done with the HTTP pipeline.
 
-{% include requirement/MUST id="general-tracing-new-span-per-method" %} create a new span for each method that user code calls.  New spans must be children of the context that was passed in.  If no context was passed in, a new root span must be created.
+{% include requirement/MUST id="general-tracing-new-span-per-method" %} create only one span for client method that user code calls.  New spans must be children of the context that was passed in.  If no context was passed in, a new root span must be created.
+
+{% include requirement/MUST id="general-tracing-suppress-client-spans-for-inner-methods" %} When client method creates a new span and internally calls into other public client methods of the same or different Azure SDK, spans created for inner client methods MUST be suppressed, their attributes and events ignored.  Nested spans created for REST calls MUST be the children of the outer client call span.  Suppression is generally done by Azure Core.
+
+{% include requirement/MUST id="general-tracing-new-span-per-method-conventions" %} populate span properties according to [Tracing Conventions].
+
+{% include requirement/MUST id="general-tracing-new-span-per-method-naming" %} us `<client> <method>` as the name of the per-method span without namespace or async suffix. Follow language-specific conventions on casing or separator.
+
+{% include requirement/MUST id="general-tracing-new-span-per-method-duration" %} start per-method spans before sending the request or calling any significantly time consuming code that might fail. End the span only after all network, IO or other unreliable and time consuming operations are complete.
+
+{% include requirement/MUST id="general-tracing-new-span-per-method-failure" %} If method throws exception, record exception on span. Do not record exception if exception is handled within service method.
 
 {% include requirement/MUST id="general-tracing-new-span-per-rest-call" %} create a new span (which must be a child of the per-method span) for each REST call that the client library makes.  This is generally done with the HTTP pipeline.
 
@@ -229,12 +239,46 @@ Let's take two examples:
 
 ## Testing
 
-One of the key things we want to support is to allow consumers of the library to easily write repeatable unit-tests for their applications without activating a service.  This allows them to reliable and quickly test their code without worrying about the vagaries of the underlying service implementation (including, for example, network conditions or service outages).  Mocking is also helpful to simulate failures, edge cases, and hard to reproduce situations (for example: does code work on February 29th).
+Software testing provides developers a safety net. Investing in tests upfront saves time overall due to increased certainty over the development process that changes are not resulting in divergence from stated requirements and specifications. The intention of these testing guidelines is to focus on the complexities around testing APIs that are backed by live services when in their normal operating mode. We want to enable open source development of our client libraries, with certainty that regardless of the developer making code changes there always remains conformance to the initial design goals of the code. Additionally, our goal is to ensure that developers building atop the Azure client libraries can meaningfully test their own code, without incurring additional complexity or expense through unnecessary interactions with a live Azure service.
 
-{% include requirement/MUST id="general-testing-mocking" %} support mocking of network operations.
+{% include requirement/MUST id="general-testing-1" %} write tests that ensure all APIs fulfil their contract and algorithms work as specified. Focus particular attention on client functionality, and places where payloads are serialized and deserialized.
+
+{% include requirement/MUST id="general-testing-2" %} ensure that client libraries have appropriate unit test coverage, [focusing on quality tests][2], using code coverage reporting tools to identify areas where more tests would be beneficial. Each client library should define its minimum level of code coverage, and ensure that this is maintained as the code base evolves.
+
+{% include requirement/MUST id="general-testing-3" %} use unique, descriptive test case names so test failures in CI (especially external PRs) are readily understandable.
+
+{% include requirement/MUST id="general-testing-4" %} ensure that users can run all tests without needing access to Microsoft-internal resources. If internal-only tests are necessary, these should be a separate test suite triggered via a separate command, so that they are not executed by users who will then encounter test failures that they cannot resolve.
+
+{% include requirement/MUSTNOT id="general-testing-5" %} rely on pre-existing test resources or infrastructure and **DO NOT** leave test resources around after tests have completed. Anything needed for a test should be initialized and cleaned up as part of the test execution (whether by running an ARM template prior to starting tests, or by setting up and tearing down resources in the tests themselves).
+
+### Recorded tests
+
+{% include requirement/MUST id="general-testing-6" %} ensure that all tests work without the need for any network connectivity or access to Azure services.
+
+{% include requirement/MUST id="general-testing-7" %} write tests that use a mock service implementation, with a set of recorded tests per service version supported by the client library. This ensures that the service client continues to properly consume service responses as APIs and implementations evolve. Recorded tests must be run using the language-appropriate trigger to enable the specific service version support in the client library.
+
+{% include requirement/MUST id="general-testing-8" %} recreate recorded tests for latest service version when notified by the service team of any changes to the endpoint APIs for that service version. In the absence of this notification, recordings should not be updated needlessly. When the service team requires recorded tests to be recreated, or when a recorded test begins to fail unexpectedly, notify the architecture board before recreating the tests.
+
+{% include requirement/MUST id="general-testing-9" %} enable all network-mocked tests to also connect to live Azure service. The test assertions should remain unchanged regardless of whether the service call is mocked or not.
+
+{% include requirement/MUSTNOT id="general-testing-10" %} include sensitive information in recorded tests.
+
+### Testability
+
+As outlined above, writing tests that we can run constantly is critical for confidence in our client library offering, but equally critical is enabling users of the Azure client libraries to write tests for their applications and libraries. End users want to be certain that their code is performing appropriately, and in cases where this code interacts with the Azure client libraries, end users do not want complex or costly Azure interactions to prevent their ability to test their software.
+
+{% include requirement/MUST id="general-testing-mocking" %} support mocking of service client methods through standard mocking frameworks or other means.
+
+{% include requirement/MUST id="general-testing-11" %} support the ability to instantiate and set all properties on model objects, such that users may return these from their code.
+
+{% include requirement/MUST id="general-testing-12" %} support user tests to operate in a network-mocked manner without the need for network access.
+
+{% include requirement/MUST id="general-testing-13" %} provide clear documentation on how users should instantiate the client library such that it can be mocked.
 
 {% include refs.md %}
 
 [OpenTelemetry]: https://opentelemetry.io
 [Azure Monitor]: https://azure.microsoft.com/services/monitor/
 [1]: https://www.youtube.com/watch?v=PAAkCSZUG1c&t=9m28s
+[2]: https://martinfowler.com/bliki/TestCoverage.html
+[Tracing Conventions]: {{ site.baseurl }}{% link docs/tracing/distributed-tracing-conventions.md %}

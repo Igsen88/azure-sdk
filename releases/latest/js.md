@@ -1,12 +1,9 @@
 ---
-title: Azure SDK for JavaScript - Latest
+title: Azure SDK for JavaScript (Latest)
 layout: default
 tags: javascript typescript
 sidebar: releases_sidebar
+header: true
 ---
-
-{% assign packages = site.data.releases.latest.js-packages %}
-{% include js-packages.html %}
-
-
+{% include releases/js.md type="client" %}
 {% include refs.md %}

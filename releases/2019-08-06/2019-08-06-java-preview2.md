@@ -1,7 +1,7 @@
 ---
 title: Azure SDK for Java (August 2019 Preview)
 layout: post
-date: 6 Aug 2019
+date: 2019-08-06
 tags: java
 sidebar: releases_sidebar
 repository: azure/azure-sdk-for-java
@@ -75,7 +75,7 @@ Detailed change logs are linked to in the Quick Links below. Here are some criti
 
 ### Azure Identity
 
-- Added new user credential types, allowing new authentication flows (Interactive, Device code, Username/password). See [Microsoft Authentication Library (MSAL) authentication flows](https://docs.microsoft.com/en-us/azure/active-directory/develop/msal-authentication-flows) for more details.
+- Added new user credential types, allowing new authentication flows (Interactive, Device code, Username/password). See [Microsoft Authentication Library (MSAL) authentication flows](https://docs.microsoft.com/azure/active-directory/develop/msal-authentication-flows) for more details.
 
 ### Event Hubs
 
@@ -100,6 +100,6 @@ Detailed change logs are linked to in the Quick Links below. Here are some criti
 
 ## Quick Links
 
-See [Nov Release](..\2019-11\java.html)
+See [Nov Release]({{site.baseurl}}{% link releases/2019-11/2019-11-java.md %})
 
 {% include refs.md %}

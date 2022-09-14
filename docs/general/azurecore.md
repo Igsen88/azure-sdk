@@ -115,9 +115,6 @@ The HTTP Pipeline provides this functionality.
 
 Services across Azure use a variety of different authentication schemes to authenticate clients. Conceptually there are two entities responsible for authenticating service client requests, a credential and an authentication policy.  Credentials provide confidential authentication data needed to authenticate requests.  Authentication policies use the data provided by a credential to authenticate requests to the service. It is essential that credential data can be updated as needed across the lifetime of a client, and authentication policies must always use the most current credential data.
 
-{% include requirement/MUSTNOT id="azurecore-http-auth-persistence" %} persist, cache, or reuse tokens returned from the token credential. This is __CRITICAL__ as credentials generally have a short validity period and the token credential is
-responsible for refreshing these.
-
 {% include requirement/MUST id="azurecore-http-auth-bearer-token" %} implement Bearer authorization policy (which accepts a token credential and
 scope).
 
@@ -129,7 +126,7 @@ The response downloader is required for most (but not all) operations to change 
 
 ### Distributed tracing policy
 
-Distributed tracing allows the consumer to trace their code from frontend to backend.  The distributed tracing library creates spans (units of unique work) to facilitate tracing.  Each span is in a parent-child relationship.  As you go deeper into the hierarchy of code, you create more spans.  These spans can then be exported to a suitable receiver as needed.  To keep track of the spans, a _distributed tracing context_ (called a context within the rest of this section) is passed into each successive layer.  For more information on this topic, visit the [OpenTelemetry]topic on tracing.
+Distributed tracing allows the consumer to trace their code from frontend to backend.  The distributed tracing library creates spans (units of unique work) to facilitate tracing.  Each span is in a parent-child relationship.  As you go deeper into the hierarchy of code, you create more spans.  These spans can then be exported to a suitable receiver as needed.   To keep track of the spans, a _distributed tracing context_ (called a context within the rest of this section) is passed into each successive layer.  For more information on this topic, visit the [OpenTelemetry] topic on tracing.
 
 The Distributed Tracing policy is responsible for:
 
@@ -142,9 +139,11 @@ The Distributed Tracing policy is responsible for:
 
 {% include requirement/MUST id="azurecore-http-tracing-accept-context" %} accept a context from calling code to establish a parent span.
 
-{% include requirement/MUST id="azurecore-http-tracing-pass-context" %} pass the context to the backend service through the appropriate headers (`traceparent`, `tracestate`, etc.) to support [Azure Monitor].
+{% include requirement/MUST id="azurecore-http-tracing-pass-context" %} pass the context to the backend service through the appropriate headers (`traceparent` and `tracestate` per [W3C Trace-Context](https://www.w3.org/TR/trace-context/) standard) to support [Azure Monitor].
 
 {% include requirement/MUST id="azurecore-http-tracing-create-span" %} create a new span (which must be a child of the per-method span) for each REST call that the client library makes.
+
+{% include requirement/MUST id="azurecore-http-tracing-opentelemetry-conventions" %} populate span properties according to [Tracing Conventions].
 
 ### Logging policy
 
@@ -244,8 +243,6 @@ Environment variables are a well-known method for IT administrators to configure
 
 {% include requirement/MUST id="azurecore-config-envvars-azure-prefix" %} prefix Azure-specific environment variables with `AZURE_`.
 
-{% include requirement/MUST id="azurecore-config-envvars-no-proxy-cidr" %} support [CIDR notation] for `NO_PROXY`.
-
 ### Global configuration
 
 Global configuration refers to configuration settings that are applied to all applicable client constructors in some manner.
@@ -263,14 +260,14 @@ Global configuration refers to configuration settings that are applied to all ap
 
 ## Authentication and credentials
 
-OAuth token authentication, obtained via Managed Security Identities (MSI) or Azure Identity is the preferred mechanism for authenticating service requests, and the only authentication credentials supported by the Azure Core library.
+OAuth token authentication, obtained via Managed Identities or Azure Identity, is the preferred mechanism for authenticating service requests, and the only authentication credentials supported by the Azure Core library.
 
 {% include requirement/MUST id="azurecore-auth-token-credential" %} provide a token credential type that can fetch an OAuth-compatible token needed to authenticate a request to the service in a non-blocking atomic manner.
 
 {% include refs.md %}
 
 [User-Agent header]: https://tools.ietf.org/html/rfc7231#section-5.5.3
-[Transient fault handling]: https://docs.microsoft.com/en-us/azure/architecture/best-practices/transient-faults
+[Transient fault handling]: https://docs.microsoft.com/azure/architecture/best-practices/transient-faults
 [OpenTelemetry]: https://opentelemetry.io/
 [Azure Monitor]: https://azure.microsoft.com/services/monitor/
-[CIDR notation]: https://en.wikipedia.org/wiki/Classless_Inter-Domain_Routing
+[Tracing Conventions]: {{ site.baseurl }}{% link docs/tracing/distributed-tracing-conventions.md %}

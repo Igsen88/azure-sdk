@@ -1,12 +1,10 @@
 ---
-title: Azure SDK Latest Releases
+title: Azure SDK Releases
 layout: default
 sidebar: releases_sidebar
 permalink: /releases/latest/index.html
 ---
-## Latest Releases
-
-* [.NET](dotnet.html)
-* [Java](java.html)
-* [Python](python.html)
-* [TypeScript](js.html)
+{% include releases/header.md %}
+{% include releases/nav.md %}
+{% include releases/languages.md type=client %}
+{% include refs.md %}

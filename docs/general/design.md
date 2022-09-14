@@ -59,7 +59,7 @@ Here are some namespaces that do not meet the guidelines:
 
 ## Client interface
 
-The API surface will consist of one of more _service clients_ that the consumer will instantiate to connect to your service, plus a set of supporting types.     
+The API surface will consist of one of more _service clients_ that the consumer will instantiate to connect to your service, plus a set of supporting types.
 
 {% include requirement/MUST id="general-client-naming" %} name service client types with the `client` suffix.
 
@@ -80,6 +80,26 @@ The following are standard verb prefixes.  You should have a good (articulated) 
 {% include tables/standard_verbs.md %}
 
 {% include requirement/MUST id="general-client-feature-support" %} support 100% of the features provided by the Azure service the client library represents. Gaps in functionality cause confusion and frustration among developers.
+
+## Service API versions
+
+The purposes of the client library is to communicate with an Azure service.  Azure services support multiple API versions.  To understand the capabilities of the service, the client library must be able to support multiple service API versions.
+
+{% include requirement/MUST id="general-service-apiversion-1" %} only target generally available service API versions when releasing a stable version of the client library.
+
+{% include requirement/MUST id="general-service-apiversion-2" %} target the latest generally available service API version by default in stable versions of the client library.
+
+{% include requirement/MUST id="general-service-apiversion-5" %} document the service API version that is used by default.
+
+{% include requirement/MUST id="general-service-apiversion-3" %} target the latest public preview API version by default when releasing a public beta version of the client library.
+
+{% include requirement/MUST id="general-service-apiversion-4" %} include all service API versions that are supported by the client library in a `ServiceVersion` enumerated value.
+
+{% include requirement/MUST id="general-service-apiversion-6" %} ensure that the values of the `ServiceVersion` enumerated value "match" the version strings in the service Swagger definition.
+
+{% include requirement/MUST id="general-service-apiversion-7" %} add or replace the `api-version` query parameter on any URI returned by the service e.g., `Operation-Location`, next page links, etc., with the service version passed configured on the client.
+
+For the purposes of this requirement, semantic changes are allowed.  For instance, many version strings are based on SemVer, which allows dots and dashes.  However, these characters are not allowed in identifiers.  The developer **MUST** be able to clearly understand what service API version will be used when the service version is set to each value in the `ServiceVersion` enumerated value.
 
 ## Model types
 
@@ -122,7 +142,7 @@ The following table enumerates the various models you might create:
 
 ## Network requests
 
-Since the client library generally wraps one or more HTTP requests, it is important to support standard network capabilities.  Asynchronous programming techniques are not widely understood, although such techniques are essential in developing scalable web services and required in certain environments (such as mobile or Node environments).  Many developers prefer synchronous method calls for their easy semantics when learning how to use a technology.  In addition, consumers have come to expect certain capabilities in a network stack - capabilities such as call cancellation, automatic retry, and logging. 
+Since the client library generally wraps one or more HTTP requests, it is important to support standard network capabilities.  Asynchronous programming techniques are not widely understood, although such techniques are essential in developing scalable web services and required in certain environments (such as mobile or Node environments).  Many developers prefer synchronous method calls for their easy semantics when learning how to use a technology.  In addition, consumers have come to expect certain capabilities in a network stack - capabilities such as call cancellation, automatic retry, and logging.
 
 {% include requirement/MUST id="general-network-support-sync-and-async" %} support both synchronous and asynchronous method calls, except where the language or default runtime does not support one or the other.
 
@@ -154,16 +174,41 @@ Here is an example of how an application would use the tree of cancellations:
 {% include requirement/MUSTNOT id="general-network-no-leakage" %} leak the underlying protocol transport implementation details to the consumer.  All types from the protocol transport implementation must be appropriately abstracted.
 
 ## Authentication
+Azure services use a variety of different authentication schemes to allow clients to access the service.  Conceptually, there are two entities responsible in this process: a credential and an authentication policy.  Credentials provide confidential authentication data.  Authentication policies use the data provided by a credential to authenticate requests to the service.
 
-Azure services use a variety of different authentication schemes to allow clients to access the service.  Conceptually, there are two entities responsible in this process: a credential and an authentication policy.  Credentials provide confidential authentication data.  Authentication policies use the data provided by a credential to authenticate requests to the service.  
+Primarily, all Azure services should support Azure Active Directory OAuth token authentication, and all clients must support authenticating requests in this manner.
 
-{% include requirement/MUST id="general-auth-support" %} support all authentication techniques that the service supports.
+{% include requirement/MUST id="general-auth-provide-token-client-constructor" %} provide a service client constructor or factory that accepts an instance of the TokenCredential abstraction from Azure Core.
 
-{% include requirement/MUST id="general-auth-use-core" %} use credential and authentication policy implementations from the Azure Core library where available.
+{% include requirement/MUSTNOT id="auth-client-no-token-persistence" %} persist, cache, or reuse tokens returned from the token credential. This is __CRITICAL__ as credentials generally have a short validity period and the token credential is responsible for refreshing these.
 
-{% include requirement/MUST id="general-auth-provide-credential types" %} provide credential types that can be used to fetch all data needed to authenticate a request to the service in a non-blocking atomic manner for each authentication scheme that does not have an implementation in Azure Core.
+{% include requirement/MUST id="general-auth-use-core" %} use authentication policy implementations from the Azure Core library where available.
 
-{% include requirement/MUST id="general-auth-provide-client-constructor" %} provide service client constructors or factories that accept any supported authentication credentials.
+{% include requirement/MUST id="general-auth-reserve-when-not-suported" %} reserve the API surface needed for TokenCredential authentication, in the rare case that a service does not yet support Azure Active Directory authentication.
+
+In addition to Azure Active Directory OAuth, services may provide custom authentication schemes. In this case the following guidelines apply.
+
+{% include requirement/MUST id="general-auth-support" %} support all authentication schemes that the service supports.
+
+{% include requirement/MUST id="general-auth-provide-credential-types" %} define a public custom credential type which enables clients to authenticate requests using the custom scheme.
+
+{% include requirement/SHOULDNOT id="general-auth-credential-type-base" %} define custom credential types extending or implementing the TokenCredential abstraction from Azure Core. This is especially true in type safe languages where extending or implementing this abstraction would break the type safety of other service clients, allowing users to instantiate them with the custom credential of the wrong service.
+
+{% include requirement/MUST id="general-auth-credential-type-placement" %} define custom credential types in the same namespace and package as the client, or in a service group namespace and shared package, not in Azure Core or Azure Identity.
+
+{% include requirement/MUST id="general-auth-credential-type-prefix" %} prepend custom credential type names with the service name or service group name to provide clear context to its intended scope and usage.
+
+{% include requirement/MUST id="general-auth-credential-type-suffix" %} append Credential to the end of the custom credential type name. Note this must be singular not plural.
+
+{% include requirement/MUST id="general-auth-provide-credential-constructor" %} define a constructor or factory for the custom credential type which takes in ALL data needed for the custom authentication protocol.
+
+{% include requirement/MUST id="general-auth-provide-update-method" %} define an update method which accepts all mutable credential data, and updates the credential in an atomic, thread safe manner.
+
+{% include requirement/MUSTNOT id="general-auth-credential-set-properties" %} define public settable properties or fields which allow users to update the authentication data directly in a non-atomic manner.
+
+{% include requirement/SHOULDNOT id="general-auth-credential-get-properties" %} define public properties or fields which allow users to access the authentication data directly. They are most often not needed by end users, and are difficult to use in a thread safe manner. In the case that exposing the authentication data is necessary, all the data needed to authenticate requests should be returned from a single API which guarantees the data returned is in a consistent state.
+
+{% include requirement/MUST id="general-auth-provide-client-constructor" %} provide service client constructors or factories that accept all supported credential types.
 
 Client libraries may support providing credential data via a connection string __ONLY IF__ the service provides a connection string to users via the portal or other tooling.   Connection strings are generally good for getting started as they are easily integrated into an application by copy/paste from the portal.  However, connection strings are considered a lesser form of authentication because the credentials cannot be rotated within a running process.
 
@@ -181,7 +226,7 @@ The *logical entity* is a protocol neutral representation of a response. For HTT
 
 {% include requirement/MUST id="general-response-streaming" %} provide examples on how to access the raw and streamed response for a given request, where exposed by the client library.  We do not expect all methods to expose a streamed response.
 
-{% include requirement/MUST id="general-response-enumeration" %} provide a language idiomatic way to enumerate all logical entities for a paged operation, automatically fetching new pages as needed.  
+{% include requirement/MUST id="general-response-enumeration" %} provide a language idiomatic way to enumerate all logical entities for a paged operation, automatically fetching new pages as needed.
 
 For example, in Python:
 
@@ -256,7 +301,7 @@ In all cases, the conditional expression is "opt-in", and the default is to perf
 
 The return value from a conditional operation must be carefully considered.  For safe operators (e.g. GET), return a response that will throw if the value is accessed (or follow the same convention used fro a `204 No Content` response), since there is no value in the body to reference.  For unsafe operators (e.g. PUT, DELETE, or POST), throw a specific error when a `Precondition Failed` or `Conflict` result is received.  This allows the consumer to do something different in the case of conflicting results.
 
-{% include requirement/SHOULD %} accept a `conditions` parameter (which takes an enumerated type) on service methods that allow a conditional check on the service. 
+{% include requirement/SHOULD %} accept a `conditions` parameter (which takes an enumerated type) on service methods that allow a conditional check on the service.
 
 {% include requirement/SHOULD %} accept an additional boolean or enum parameter on service methods as necessary to enable conditional checks using `ETag`.
 
@@ -302,7 +347,7 @@ Long-running operations are operations which consist of an initial request to st
 {% include requirement/MUST id="general-lro-polling-config" %} support the following polling configuration options:
 
 * `pollInterval`
-  
+
 Polling configuration may be used only in the absence of relevant retry-after headers from service, and otherwise should be ignored.
 
 {% include requirement/MUST id="general-lro-prefix" %} prefix method names which return a poller with either `begin` or `start`.  Language-specific guidelines will dictate which verb to use.
@@ -330,7 +375,6 @@ For example, MQTT over WebSockets provides the ability to add headers during the
 
 {% include requirement/MUST id="general-proto-adparch" %} consult the [Architecture Board] on policy decisions for non-HTTP protocols.  Implementation of all policies is expected.  If the protocol cannot support a policy, obtain an exception from the [Architecture Board].
 
-{% include requirement/MUST id="general-proto-config" %} use the global configuration established in the Azure Core library to configure policies for non-HTTP protocols.  Consumers don't necessarily know what protocol is used by the client library.  They will expect the client library to honor global configuration that they have established for the entire Azure SDK.  
+{% include requirement/MUST id="general-proto-config" %} use the global configuration established in the Azure Core library to configure policies for non-HTTP protocols.  Consumers don't necessarily know what protocol is used by the client library.  They will expect the client library to honor global configuration that they have established for the entire Azure SDK.
 
 {% include refs.md %}
-

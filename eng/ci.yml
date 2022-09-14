@@ -1,54 +1,67 @@
 trigger:
 - master
 
+resources:
+  repositories:
+    - repository: azure-sdk-tools
+      type: github
+      name: Azure/azure-sdk-tools
+      endpoint: azure
+      ref: refs/tags/azure-sdk-tools_20220404.3
+
 pool:
   vmImage: 'ubuntu-latest'
 
+variables:
+  BUNDLE_PATH: $(Pipeline.Workspace)/.bundle
+
 steps:
+- checkout: self
+- checkout: azure-sdk-tools
+
+- task: Cache@2
+  inputs:
+    key: 'gems | "$(Agent.OS)" | $(Build.SourcesDirectory)/azure-sdk/Gemfile | $(Build.SourcesDirectory)/azure-sdk/Gemfile.lock'
+    path: $(BUNDLE_PATH)
+  displayName: Cache gems
+
 - task: UseRubyVersion@0
   inputs:
-    versionSpec: '>= 2.4'
+    versionSpec: '2.7.x'
   displayName: Initialize Ruby
 
 - script: |
-    gem install jekyll bundler
-  displayName: Install jekyll and bundler
+    gem install bundler
+  displayName: Install bundler
+  workingDirectory: azure-sdk
 
 - script: |
     bundle install
   displayName: Install project dependencies
+  workingDirectory: azure-sdk
 
 - script: |
-    bundle exec jekyll build
+    bundle exec jekyll build --future
   displayName: Build Site
+  workingDirectory: azure-sdk
 
-- script: |
-    bundle exec jekyll serve --detach
-  displayName: Launch local site
-
-- task: Powershell@2
+- task: PowerShell@2
+  displayName: Verify CSV data contents
   inputs:
-    targetType: inline
     pwsh: true
-    script: |
-      $ProgressPreference = "SilentlyContinue"; # Disable invoke-webrequest progress dialog
-      $invalidLinks = 0;
-      cd "_site"
-      $rootPathLength = (get-location).Path.Length + 1;
-      foreach($html in (dir -r -i *.html)) {
-        $relPath = $html.FullName.Substring($rootPathLength);
-        # Skip the paths starting with '_' as they are generated and not directly referenced
-        if ($relPath.StartsWith("_")) { continue }
-        $url = [System.Uri]("http://localhost:4000/$relPath");
-        Write-Host "Checking links on $url"
-        ../eng/scripts/Verify-Links.ps1 $url -devOpsLogging
-        $invalidLinks += $lastExitCode
-      }
-      Write-Host "Found $invalidLinks total bad links"
-      exit $invalidLinks
-  displayName: Verify Links
+    workingDirectory: azure-sdk
+    filePath: azure-sdk/eng/scripts/Update-Release-Versions.ps1
+    arguments: "check"
 
-- script: |
-    pkill -f jekyll
-  displayName: Shutdown local site
-  condition: always()
+- task: PowerShell@2
+  displayName: Verify site links
+  inputs:
+    pwsh: true
+    workingDirectory: azure-sdk
+    filePath: azure-sdk-tools/eng/common/scripts/Verify-Links.ps1
+    arguments: >
+      -urls ./_site/azure-sdk/index.html
+      -ignoreLinksFile ./eng/ignore-links.txt
+      -inputCacheFile "https://azuresdkartifacts.blob.core.windows.net/verify-links-cache/verify-links-cache.txt"
+      -devOpsLogging:$true
+      -baseUrl "file://$PWD/_site/azure-sdk"

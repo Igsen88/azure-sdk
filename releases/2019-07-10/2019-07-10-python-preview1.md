@@ -1,6 +1,6 @@
 ---
 title: Azure SDK for Python (July 2019 Preview)
-date: 10 Jul 2019
+date: 2019-07-10
 layout: post
 tags: python
 sidebar: releases_sidebar
@@ -26,15 +26,16 @@ pip install --pre azure-storage-queue
 ```
 
 ## Feedback
+
 If you have a bug or feature request for one of the libraries, please post an issue to [GitHub](https://github.com/azure/azure-sdk-for-python/issues).
 
-
 ## Changelog
+
 Detailed change logs are linked to in the Quick Links below. Here are some critical call outs.
 
 ### Identity
 
-* The new `azure-identity` package simplifies authentication across the Azure Python libraries. It supports token authentication using an Azure Active Directory [service principal](https://docs.microsoft.com/en-us/cli/azure/create-an-azure-service-principal-azure-cli) or [managed identity](https://docs.microsoft.com/en-us/azure/active-directory/managed-identities-azure-resources/overview). Additional forms of authentication (e.g. user authentication) will be added shortly.
+* The new `azure-identity` package simplifies authentication across the Azure Python libraries. It supports token authentication using an Azure Active Directory [service principal](https://docs.microsoft.com/cli/azure/create-an-azure-service-principal-azure-cli) or [managed identity](https://docs.microsoft.com/azure/active-directory/managed-identities-azure-resources/overview). Additional forms of authentication (e.g. user authentication) will be added shortly.
 
 ### Cosmos
 
@@ -92,6 +93,6 @@ These clients can be accessed by navigating down the client hierarchy, or instan
 
 ## Quick Links
 
-See [Nov Release](..\2019-11\python.html)
+See [Nov Release]({{site.baseurl}}{% link releases/2019-11/2019-11-python.md %})
 
 {% include refs.md %}
